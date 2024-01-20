@@ -8,11 +8,11 @@ if (currentHtmlIndex === null) {
 var completedEpisodes = 0; // Counter for completed episodes
 // Current index for the HTML files array
 var htmlFiles = [
-    '/Users/encord/Documents/Code/Genie/genie_data_final/dataset_creation_final/miniwob/html/miniwob/choose-date-easy.html',
-  '/Users/encord/Documents/Code/Genie/genie_data_final/dataset_creation_final/miniwob/html/miniwob/choose-date-medium.html',
-  '/Users/encord/Documents/Code/Genie/genie_data_final/dataset_creation_final/miniwob/html/miniwob/click-tab-2-easy.html',
-  '/Users/encord/Documents/Code/Genie/genie_data_final/dataset_creation_final/miniwob/html/miniwob/click-tab-2-medium.html',
-  '/Users/encord/Documents/Code/Genie/genie_data_final/dataset_creation_final/miniwob/html/miniwob/click-test-transfer.html'
+    '../miniwob/choose-date-easy.html',
+  '../miniwob/choose-date-medium.html',
+  '../miniwob/click-tab-2-easy.html',
+  '../miniwob/click-tab-2-medium.html',
+  '../miniwob/click-test-transfer.html'
 ];
 
 // various common utilities
