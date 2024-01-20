@@ -1,4 +1,5 @@
 var core = {};
+// set html index to 0 if null what is happening in the else situation?
 var currentHtmlIndex = localStorage.getItem('currentHtmlIndex');
 if (currentHtmlIndex === null) {
   currentHtmlIndex = 0;
@@ -9,8 +10,8 @@ var completedEpisodes = 0; // Counter for completed episodes
 // Current index for the HTML files array
 var htmlFiles = [
     '../miniwob/choose-date-easy.html',
+    '../miniwob/click-tab-2-easy.html',
   '../miniwob/choose-date-medium.html',
-  '../miniwob/click-tab-2-easy.html',
   '../miniwob/click-tab-2-medium.html',
   '../miniwob/click-test-transfer.html'
 ];
@@ -91,8 +92,16 @@ core.startEpisode = function() {
     core.cover_div.setAttribute('id', 'sync-task-cover');
     core.cover_div.innerHTML = 'START';
     core.cover_div.onclick = function () {
-      console.log("start clicked")
-      core.startEpisodeReal();
+      console.log("start clicked");
+      console.log("completed episodes index",completedEpisodes)
+      console.log("index_counter",currentHtmlIndex)
+      if (completedEpisodes < 3) {
+        core.startEpisodeReal();
+      } else {
+        console.log("Start is disabled due to completedEpisodes >= 3");
+        core.cover_div.innerHTML = 'Press Next Task';
+        // Optionally, provide some visual feedback that the start is disabled
+      }
     };
     document.body.appendChild(core.cover_div);
   }
@@ -120,8 +129,39 @@ core.startEpisodeReal = function () {
   }, core.EPISODE_MAX_TIME);
 }
 
+core.create_button = function() {
+  var existingButton = document.getElementById('nextTaskButton');
+  if (existingButton) {
+    existingButton.remove(); // Remove existing button to avoid duplicates
+  }
+
+  var button = document.createElement('button');
+  button.id = 'nextTaskButton';
+  button.textContent = 'Next Task';
+  button.style.display = 'none'; // Initially hide the button
+
+  button.addEventListener('click', function() {
+    // Reset the completed episodes counter after next task is clicked
+    completedEpisodes = 0;
+    // Hide the button
+    button.style.display = 'none';
+
+    // Redirect and move to the next HTML file
+    currentHtmlIndex = (currentHtmlIndex + 1) % htmlFiles.length;
+    console.log("currentHtmlIndex increasing",currentHtmlIndex)
+    // Save the updated index to localStorage
+    localStorage.setItem('currentHtmlIndex', currentHtmlIndex);
+    window.location.href = htmlFiles[currentHtmlIndex];
+    console.log("Navigating to", htmlFiles[currentHtmlIndex]);
+  });
+
+  // Append the button to a specific element
+  document.body.appendChild(button);
+}
+
+
 core.endEpisode = function(reward, time_proportional, reason) {
-  console.log("episode hash ended")
+  console.log("episode has ended")
   // stop timer and set to null, so that only one event gets rewarded
   // for any given episode.
   if(core.EP_TIMER !== null) {
@@ -159,26 +199,14 @@ core.endEpisode = function(reward, time_proportional, reason) {
   //  core.startEpisode();
   //}, 500);
   completedEpisodes++; // Increment the episode counter
-   // Check if two episodes have been completed
-   if (completedEpisodes >= 3) {
-    // Reset the counter
-    completedEpisodes = 0;
-  
-    // Add a wait time (in milliseconds) before redirecting
-    var waitTime = 3000; // 3 seconds (adjust as needed)
-  
-    setTimeout(function() {
-      // Redirect to the current HTML file
-      window.location.href = htmlFiles[currentHtmlIndex];
-      console.log("href", htmlFiles[currentHtmlIndex]);
-  
-      // Move to the next HTML file
-      currentHtmlIndex = (currentHtmlIndex + 1) % htmlFiles.length;
-  
-      // Save the updated index in localStorage
-      localStorage.setItem('currentHtmlIndex', currentHtmlIndex);
-    }, waitTime);
+  if (completedEpisodes >= 3) {
+    var nextTaskButton = document.getElementById('nextTaskButton');
+    if (nextTaskButton) {
+      nextTaskButton.style.display = 'block'; // Show the button
+    }
   }
+   // Check if two episodes have been completed
+   
   console.log("completed episodes index",completedEpisodes)
   console.log("index_counter",currentHtmlIndex)
 
