@@ -7,11 +7,52 @@
 </head>
 <body>
     <h1>Welcome to Genie AI dataset collection</h1>
-    <button id="startButton">Start</button>
+
+    <form id="dataForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <button type="submit">Start</button>
+    </form>
 
     <script>
-        // Add a click event listener to the Start button
-        document.getElementById('startButton').addEventListener('click', function () {
+        // Add a submit event listener to the form
+        document.getElementById('dataForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent the default form submission
+
+            // Get the form inputs
+            var name = document.getElementById('name').value;
+            var email = document.getElementById('email').value;
+
+            // Create an object to store the data
+            var formData = {
+                Name: name,
+                Email: email
+            };
+
+            // Use Airtable API to send the data to your Airtable database
+            // You'll need to replace 'YOUR_API_KEY', 'YOUR_BASE_ID', and 'YOUR_TABLE_NAME' with your Airtable details
+            fetch('https://api.airtable.com/v0/YOUR_BASE_ID/YOUR_TABLE_NAME', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'patrDKfeV8QKgqt3e.8892b21a44b445ffcc53c447768084ac1ded24e31f652f4e54bdacc51945f829Y',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fields: formData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response from Airtable (e.g., show a success message)
+                console.log(data);
+            })
+            .catch(error => {
+                // Handle any errors
+                console.error(error);
+            });
+
             // Redirect to the HTML page where the core code is executed
             window.location.href = './html_files/miniwob/choose-date.html';
         });
