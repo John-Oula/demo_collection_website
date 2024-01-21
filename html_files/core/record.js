@@ -36,17 +36,33 @@ recorder.LISTENERS = [
   'keyup',
   'scroll',
 ];
+// recorder.setup = function () {
+//   if (recorder.isSetup) return;
+//   document.getElementById('reward-display').innerHTML += recorder.DISPLAY_HTML;
+//   recorder.LISTENERS.forEach(function (name) {
+//     document.addEventListener(name, recorder['on' + name], true);
+//     document.addEventListener(name, recorder['on' + name], false);
+//   });
+//   recorder.server = (core.QueryString.server || recorder.SERVER_DEFAULT) + '/record';
+//   document.getElementById('server-name').innerHTML = recorder.server;
+//   var url = window.location.pathname;
+//   recorder.taskName = url.substr(url.lastIndexOf('/') + 1).replace(/\.html/, '');
+//   recorder.isSetup = true;
+// }
+
 recorder.setup = function () {
   if (recorder.isSetup) return;
-  document.getElementById('reward-display').innerHTML += recorder.DISPLAY_HTML;
+
+  // Set up event listeners
   recorder.LISTENERS.forEach(function (name) {
     document.addEventListener(name, recorder['on' + name], true);
     document.addEventListener(name, recorder['on' + name], false);
   });
-  recorder.server = (core.QueryString.server || recorder.SERVER_DEFAULT) + '/record';
-  document.getElementById('server-name').innerHTML = recorder.server;
+
+  // Set the task name based on the current URL
   var url = window.location.pathname;
   recorder.taskName = url.substr(url.lastIndexOf('/') + 1).replace(/\.html/, '');
+
   recorder.isSetup = true;
 }
 
@@ -162,54 +178,95 @@ recorder.onscroll = function (event) {
 }
 
 // End recording the episode
+// recorder.endRecording = function () {
+//   recorder.data.reward = WOB_REWARD_GLOBAL;
+//   recorder.data.rawReward = WOB_RAW_REWARD_GLOBAL;
+//   // Send the data to the server
+//   recorder.isRecording = false;
+//   var data = recorder.data;
+//   recorder.data = {};   // Prevent future addition
+//   console.log(data);
+//   var req = new XMLHttpRequest();
+//   req.open('POST', recorder.server);
+//   req.setRequestHeader('Content-type', 'text/plain');
+//   req.onreadystatechange = function () {
+//     if (req.readyState === XMLHttpRequest.DONE) {
+//       var msg = document.getElementById('server-reply');
+//       if (req.status === 200) {
+//         msg.setAttribute('style', 'color:green');
+//         msg.textContent = 'OK: ' + req.responseText;
+//       } else {
+//         msg.setAttribute('style', 'color:red');
+//         msg.textContent = 'ERROR: ' + req.statusText;
+//       }
+//     }
+//   }
+//   req.send(JSON.stringify(data));
+//   // Make it ready for the next episode
+//   core.cover_div.classList.remove('transparent');
+// }
+
 recorder.endRecording = function () {
   recorder.data.reward = WOB_REWARD_GLOBAL;
   recorder.data.rawReward = WOB_RAW_REWARD_GLOBAL;
-  // Send the data to the server
+
+  // Convert the recorded data to a JSON string
+  var jsonData = JSON.stringify(recorder.data, null, 2); // Beautify the JSON
+
+  // Create a Blob from the JSON data
+  var dataBlob = new Blob([jsonData], {type : 'application/json'});
+
+  // Create an object URL for the Blob
+  var url = window.URL.createObjectURL(dataBlob);
+
+  // Create a temporary anchor element and trigger download
+  var tempLink = document.createElement('a');
+  tempLink.href = url;
+  tempLink.download = recorder.taskName + '_data.json'; // Name of the downloaded file
+  tempLink.style.display = 'none';
+  document.body.appendChild(tempLink); // Required for Firefox
+  tempLink.click(); // Trigger the download
+
+  // Cleanup
+  document.body.removeChild(tempLink);
+  window.URL.revokeObjectURL(url);
+
+  // Reset recorder state
   recorder.isRecording = false;
-  var data = recorder.data;
-  recorder.data = {};   // Prevent future addition
-  console.log(data);
-  var req = new XMLHttpRequest();
-  req.open('POST', recorder.server);
-  req.setRequestHeader('Content-type', 'text/plain');
-  req.onreadystatechange = function () {
-    if (req.readyState === XMLHttpRequest.DONE) {
-      var msg = document.getElementById('server-reply');
-      if (req.status === 200) {
-        msg.setAttribute('style', 'color:green');
-        msg.textContent = 'OK: ' + req.responseText;
-      } else {
-        msg.setAttribute('style', 'color:red');
-        msg.textContent = 'ERROR: ' + req.statusText;
-      }
-    }
-  }
-  req.send(JSON.stringify(data));
-  // Make it ready for the next episode
-  core.cover_div.classList.remove('transparent');
+  recorder.data = {};
+
+  // Remove event listeners
+  recorder.LISTENERS.forEach(function (name) {
+    document.removeEventListener(name, recorder['on' + name], true);
+    document.removeEventListener(name, recorder['on' + name], false);
+  });
+  console.log("remove event listeners")
 }
+
 
 // ################################
 // Wrappers
 
-// Wrap startEpisodeReal
-core.startEpisodeReal = (function(startEpisodeReal) {
-  return function () {
-    if (core.cover_div.classList.contains('transparent')) return;
-    recorder.setup();
-    startEpisodeReal();
-    recorder.startRecording();
-  }
-})(core.startEpisodeReal);
+// // Wrap startEpisodeReal
+// core.startEpisodeReal = (function(startEpisodeReal) {
+//   return function () {
+//     if (core.cover_div.classList.contains('transparent')) return;
+//     recorder.setup();
+//     startEpisodeReal();
+//     recorder.startRecording();
+//   }
+// })(core.startEpisodeReal);
 
-// Wrap endEpisode
-core.endEpisode = (function(endEpisode) {
-  return function (reward, time_proportional, reason) {
-    if (core.EP_TIMER === null) return;
-    core.cover_div.classList.add('transparent');
-    endEpisode(reward, time_proportional, reason);
-    // Delay to allow the last action to be recorded
-    setTimeout(recorder.endRecording, 500);
-  }
-})(core.endEpisode);
+// // // Wrap endEpisode
+// core.endEpisode = (function(endEpisode) {
+//   console.log("end episode from record")
+//   return function (reward, time_proportional, reason) {
+//     if (core.EP_TIMER === null) return;
+//     core.cover_div.classList.add('transparent');
+//     endEpisode(reward, time_proportional, reason);
+//     // Delay to allow the last action to be recorded
+//     setTimeout(recorder.endRecording, 500);
+//     console.log('downloaded file')
+//     // endEpisode(reward, time_proportional, reason);
+//   }
+// })(core.endEpisode);

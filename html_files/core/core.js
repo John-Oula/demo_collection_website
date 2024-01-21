@@ -9,11 +9,11 @@ if (currentHtmlIndex === null) {
 var completedEpisodes = 0; // Counter for completed episodes
 // Current index for the HTML files array
 var htmlFiles = [
-    '../miniwob/choose-date-easy.html',
-    '../miniwob/click-tab-2-easy.html',
-  '../miniwob/choose-date-medium.html',
-  '../miniwob/click-tab-2-medium.html',
-  '../miniwob/click-test-transfer.html'
+    '../miniwob/choose-date-easy.html?record=true',
+    '../miniwob/click-tab-2-easy.html?record=true',
+  '../miniwob/choose-date-medium.html?record=true',
+  '../miniwob/click-tab-2-medium.html?record=true',
+  '../miniwob/click-test-transfer.html?record=true'
 ];
 
 // various common utilities
@@ -127,6 +127,10 @@ core.startEpisodeReal = function () {
   core.EP_TIMER = setTimeout(function(){
     core.endEpisode(-1, false, 'timed out'); // time ran out
   }, core.EPISODE_MAX_TIME);
+
+  console.log("start recording")
+  recorder.setup();
+  recorder.startRecording();
 }
 
 core.create_button = function() {
@@ -161,7 +165,8 @@ core.create_button = function() {
 
 
 core.endEpisode = function(reward, time_proportional, reason) {
-  console.log("episode has ended")
+  console.log("ending recording")
+  recorder.endRecording()
   // stop timer and set to null, so that only one event gets rewarded
   // for any given episode.
   if(core.EP_TIMER !== null) {
@@ -211,7 +216,9 @@ core.endEpisode = function(reward, time_proportional, reason) {
   console.log("index_counter",currentHtmlIndex)
 
   // With the sync screen, the timeout above is redundant
-  core.startEpisode();
+  setTimeout(function(){
+    core.startEpisode();
+}, 500); // delayTime is the delay before the next episode starts
 }
 
 // returns parameters passed in the url.
@@ -694,5 +701,6 @@ core.addRecordScript = function () {
 
 // Enable demonstration recording with "?record=..." in the URL
 if (core.QueryString.record) {
+  console.log("start recorder")
   core.addRecordScript();
 }
