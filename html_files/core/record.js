@@ -75,6 +75,7 @@ recorder.addState = function (event, action) {
   var state = {
     'time': new Date().getTime() - core.ept0,
     'action': action,
+    'browserPosition': { 'x': window.screenX, 'y': window.screenY }
   };
   if (event)
     event.target.dataset.recording_target = true;
