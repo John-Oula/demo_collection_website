@@ -5,25 +5,18 @@
 
 * utterance
 * states: array of objects with the following keys:
-  - time: time elapsed
+  - time: time elapsed since start of video
   - dom: DOM structure
   - action: action performed at that moment
+  -link to screenshot
+  - current view port coordinates
 * reward
 
 */
 
-var recorder = {};
-recorder.SERVER_DEFAULT = 'http://localhost:8032';
-recorder.DISPLAY_HTML = `
-  <div class="info">
-    <label>Server URL:</label>
-    <span id='server-name'>-</span>
-  </div>
-  <div class="info">
-    <label>Server reply:</label>
-    <span id='server-reply'>-</span>
-  </div>
-`;
+var recorder = {
+  isTakingScreenshot: false,
+};
 
 // Add event listeners
 recorder.LISTENERS = [
@@ -36,20 +29,27 @@ recorder.LISTENERS = [
   'keyup',
   'scroll',
 ];
-// recorder.setup = function () {
-//   if (recorder.isSetup) return;
-//   document.getElementById('reward-display').innerHTML += recorder.DISPLAY_HTML;
-//   recorder.LISTENERS.forEach(function (name) {
-//     document.addEventListener(name, recorder['on' + name], true);
-//     document.addEventListener(name, recorder['on' + name], false);
-//   });
-//   recorder.server = (core.QueryString.server || recorder.SERVER_DEFAULT) + '/record';
-//   document.getElementById('server-name').innerHTML = recorder.server;
-//   var url = window.location.pathname;
-//   recorder.taskName = url.substr(url.lastIndexOf('/') + 1).replace(/\.html/, '');
-//   recorder.isSetup = true;
-// }
 
+//Takes a screenshot
+//uses a boolean to make sure no other screenshot can occur while a screenshot is happening
+recorder.takeScreenshot = function(screenshotFileName) {
+  if (recorder.isTakingScreenshot) return;
+  recorder.isTakingScreenshot = true;
+
+  html2canvas(document.body).then(canvas => {
+      var image = canvas.toDataURL("image/png");
+      var link = document.createElement('a');
+      link.href = image;
+      link.download = screenshotFileName + '.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      recorder.canTakeScreenshot = true;
+  });
+};
+
+//set up the recorder and set the listeners for events on for the recording
 recorder.setup = function () {
   if (recorder.isSetup) return;
 
@@ -82,23 +82,70 @@ recorder.startRecording = function () {
   recorder.addState(null, null);
 }
 
-// Add a state to the recording data
-recorder.addState = function (event, action) {
+// // Add a state to the recording data
+// recorder.addState = function (event, action) {
+//   if (!recorder.isRecording) return;
+//   if (event && action)
+//     action.timing = event.eventPhase;
+//   console.log('Adding state', action);
+//   var state = {
+//     'time': new Date().getTime() - core.ept0,
+//     'action': action,
+//   };
+//   if (event)
+//     event.target.dataset.recording_target = true;
+//   state.dom = core.getDOMInfo();
+//   if (event)
+//     delete event.target.dataset.recording_target;
+//   recorder.data.states.push(state);
+
+//     // Delay only the screenshot capture
+//   setTimeout(function() {
+//     var screenshotFileName = 'click_' + Date.now();
+//     recorder.takeScreenshot(screenshotFileName);
+//     var screenshotLink = screenshotFileName + '.png';
+//     console.log("Screenshot taken", screenshotLink);
+
+//     // Update the action object with screenshot link
+//     action.screenshotLink = screenshotLink;
+// }, 30); // Delay of 30 ms
+// }
+
+recorder.addState = function(event, action) {
   if (!recorder.isRecording) return;
-  if (event && action)
-    action.timing = event.eventPhase;
-  console.log('Adding state', action);
+  if (event && action) action.timing = event.eventPhase;
+
+  // Initialize state with a placeholder for the screenshot
   var state = {
     'time': new Date().getTime() - core.ept0,
     'action': action,
+    'screenshot': 'pending' // Placeholder
   };
-  if (event)
-    event.target.dataset.recording_target = true;
+
+  if (event) event.target.dataset.recording_target = true;
   state.dom = core.getDOMInfo();
-  if (event)
-    delete event.target.dataset.recording_target;
+  if (event) delete event.target.dataset.recording_target;
+
+  // Add the state with the placeholder
   recorder.data.states.push(state);
-}
+  console.log('Action:', state.action);
+
+  // If action type is 'click', delay the screenshot capture
+  if (action && action.type === 'click') {
+    setTimeout(function() {
+      console.log("taking screenshot")
+      var screenshotFileName = 'click_' + Date.now();
+      recorder.takeScreenshot(screenshotFileName);
+      console.log("screenshot file name",screenshotFileName)
+      // Update the last state object with the screenshot link
+      console.log("length of states",recorder.data.states.length)
+      if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
+        recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
+      }
+    }, 10); // Delay of 30 ms
+  }
+};
+
 
 // Actions
 recorder.ondblclick = function (event) {
@@ -121,6 +168,8 @@ recorder.onclick = function (event) {
     'y': event.pageY,
   });
 }
+
+
 recorder.onmousedown = function (event) {
   if (event.target === core.cover_div ||
       event.pageX >= 160 || event.pageY >= 210)
@@ -237,6 +286,7 @@ recorder.endRecording = function () {
 
   // Remove event listeners
   recorder.LISTENERS.forEach(function (name) {
+    console.log("removing event listeners")
     document.removeEventListener(name, recorder['on' + name], true);
     document.removeEventListener(name, recorder['on' + name], false);
   });
