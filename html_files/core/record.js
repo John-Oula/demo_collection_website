@@ -5,25 +5,16 @@
 
 * utterance
 * states: array of objects with the following keys:
-  - time: time elapsed
+  - time: time elapsed since start of video
   - dom: DOM structure
   - action: action performed at that moment
+  -link to screenshot
+  - current view port coordinates
 * reward
 
 */
 
 var recorder = {};
-recorder.SERVER_DEFAULT = 'http://localhost:8032';
-recorder.DISPLAY_HTML = `
-  <div class="info">
-    <label>Server URL:</label>
-    <span id='server-name'>-</span>
-  </div>
-  <div class="info">
-    <label>Server reply:</label>
-    <span id='server-reply'>-</span>
-  </div>
-`;
 
 // Add event listeners
 recorder.LISTENERS = [
@@ -36,20 +27,24 @@ recorder.LISTENERS = [
   'keyup',
   'scroll',
 ];
-// recorder.setup = function () {
-//   if (recorder.isSetup) return;
-//   document.getElementById('reward-display').innerHTML += recorder.DISPLAY_HTML;
-//   recorder.LISTENERS.forEach(function (name) {
-//     document.addEventListener(name, recorder['on' + name], true);
-//     document.addEventListener(name, recorder['on' + name], false);
-//   });
-//   recorder.server = (core.QueryString.server || recorder.SERVER_DEFAULT) + '/record';
-//   document.getElementById('server-name').innerHTML = recorder.server;
-//   var url = window.location.pathname;
-//   recorder.taskName = url.substr(url.lastIndexOf('/') + 1).replace(/\.html/, '');
-//   recorder.isSetup = true;
-// }
 
+// Take the screenshot of the browser
+recorder.takeScreenshot = function(screenshotFileName) {
+    html2canvas(document.body).then(canvas => {
+        // Create an image
+        var image = canvas.toDataURL("image/png");
+
+        // Create a link to download the image with the specified file name
+        var link = document.createElement('a');
+        link.href = image;
+        link.download = screenshotFileName + '.png'; // Use the provided file name
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+}
+
+//set up the recorder and set the listeners for events on
 recorder.setup = function () {
   if (recorder.isSetup) return;
 
@@ -105,20 +100,34 @@ recorder.ondblclick = function (event) {
   if (event.target === core.cover_div ||
       event.pageX >= 160 || event.pageY >= 210)
     return;
+
+  // Capture the screenshot and store the link
+  var screenshotFileName = 'dblclick_' + Date.now(); // Generate a unique file name
+  recorder.takeScreenshot(screenshotFileName); // Capture the screenshot
+  var screenshotLink = screenshotFileName + '.png'; // Replace 'path_to_screenshot' with the actual path
+
   recorder.addState(event, {
     'type': 'dblclick',
     'x': event.pageX,
     'y': event.pageY,
+    'screenshotLink': screenshotLink // Store the link to the screenshot
   });
 }
 recorder.onclick = function (event) {
   if (event.target === core.cover_div ||
       event.pageX >= 160 || event.pageY >= 210)
     return;
+
+  // Capture the screenshot and store the link
+  var screenshotFileName = 'dblclick_' + Date.now(); // Generate a unique file name
+  recorder.takeScreenshot(screenshotFileName); // Capture the screenshot
+  var screenshotLink = screenshotFileName + '.png'; // Replace 'path_to_screenshot' with the actual path
+  console.log("screen shot taken",screenshotLink)
   recorder.addState(event, {
     'type': 'click',
     'x': event.pageX,
     'y': event.pageY,
+    'screenshotLink': screenshotLink // Store the link to the screenshot
   });
 }
 recorder.onmousedown = function (event) {

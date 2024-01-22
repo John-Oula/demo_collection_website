@@ -702,3 +702,4 @@ core.addRecordScript = function () {
 // Call addRecordScript without checking the URL
 console.log("Start recorder for all URLs");
 core.addRecordScript();
+console.log("added record script")
