@@ -14,7 +14,9 @@
 
 */
 
-var recorder = {};
+var recorder = {
+  isTakingScreenshot: false,
+};
 
 // Add event listeners
 recorder.LISTENERS = [
@@ -29,22 +31,41 @@ recorder.LISTENERS = [
 ];
 
 // Take the screenshot of the browser
+// recorder.takeScreenshot = function(screenshotFileName) {
+//     html2canvas(document.body).then(canvas => {
+//         // Create an image
+//         var image = canvas.toDataURL("image/png");
+
+//         // Create a link to download the image with the specified file name
+//         var link = document.createElement('a');
+//         link.href = image;
+//         link.download = screenshotFileName + '.png'; // Use the provided file name
+//         document.body.appendChild(link);
+//         link.click();
+//         document.body.removeChild(link);
+//     });
+// }
+
+//Takes a screenshot
+//uses a boolean to make sure no other screenshot can occur while a screenshot is happening
 recorder.takeScreenshot = function(screenshotFileName) {
-    html2canvas(document.body).then(canvas => {
-        // Create an image
-        var image = canvas.toDataURL("image/png");
+  if (recorder.isTakingScreenshot) return;
+  recorder.isTakingScreenshot = true;
 
-        // Create a link to download the image with the specified file name
-        var link = document.createElement('a');
-        link.href = image;
-        link.download = screenshotFileName + '.png'; // Use the provided file name
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    });
-}
+  html2canvas(document.body).then(canvas => {
+      var image = canvas.toDataURL("image/png");
+      var link = document.createElement('a');
+      link.href = image;
+      link.download = screenshotFileName + '.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-//set up the recorder and set the listeners for events on
+      recorder.isTakingScreenshot = false;
+  });
+};
+
+//set up the recorder and set the listeners for events on for the recording
 recorder.setup = function () {
   if (recorder.isSetup) return;
 
@@ -95,41 +116,66 @@ recorder.addState = function (event, action) {
   recorder.data.states.push(state);
 }
 
-// Actions
 recorder.ondblclick = function (event) {
+  console.log("double click state")
   if (event.target === core.cover_div ||
       event.pageX >= 160 || event.pageY >= 210)
     return;
 
-  // Capture the screenshot and store the link
-  var screenshotFileName = 'dblclick_' + Date.now(); // Generate a unique file name
-  recorder.takeScreenshot(screenshotFileName); // Capture the screenshot
-  var screenshotLink = screenshotFileName + '.png'; // Replace 'path_to_screenshot' with the actual path
+    var action = {
+      'type': 'dbclick',
+      'x': event.pageX,
+      'y': event.pageY
+  };
+  // Add state immediately with action details
+  recorder.addState(event, action);
 
-  recorder.addState(event, {
-    'type': 'dblclick',
-    'x': event.pageX,
-    'y': event.pageY,
-    'screenshotLink': screenshotLink // Store the link to the screenshot
-  });
-}
+  // Logic for double click event
+  var screenshotFileName = 'dblclick_' + Date.now();
+  recorder.takeScreenshot(screenshotFileName);
+  var screenshotLink = screenshotFileName + '.png';
+
+//   // Delay only the screenshot capture
+//   setTimeout(function() {
+//     var screenshotFileName = 'click_' + Date.now();
+//     recorder.takeScreenshot(screenshotFileName);
+//     var screenshotLink = screenshotFileName + '.png';
+//     console.log("Screenshot taken", screenshotLink);
+
+//     // Update the action object with screenshot link
+//     action.screenshotLink = screenshotLink;
+// }, 30); // Delay of 30 ms
+
+};
+
 recorder.onclick = function (event) {
+  console.log("click state")
   if (event.target === core.cover_div ||
       event.pageX >= 160 || event.pageY >= 210)
-    return;
+      return;
 
-  // Capture the screenshot and store the link
-  var screenshotFileName = 'dblclick_' + Date.now(); // Generate a unique file name
-  recorder.takeScreenshot(screenshotFileName); // Capture the screenshot
-  var screenshotLink = screenshotFileName + '.png'; // Replace 'path_to_screenshot' with the actual path
-  console.log("screen shot taken",screenshotLink)
-  recorder.addState(event, {
-    'type': 'click',
-    'x': event.pageX,
-    'y': event.pageY,
-    'screenshotLink': screenshotLink // Store the link to the screenshot
-  });
-}
+  var action = {
+      'type': 'click',
+      'x': event.pageX,
+      'y': event.pageY
+  };
+
+  // Add state immediately with action details
+  recorder.addState(event, action);
+
+  // Delay only the screenshot capture
+  // setTimeout(function() {
+  //     var screenshotFileName = 'click_' + Date.now();
+  //     recorder.takeScreenshot(screenshotFileName);
+  //     var screenshotLink = screenshotFileName + '.png';
+  //     console.log("Screenshot taken", screenshotLink);
+
+  //     // Update the action object with screenshot link
+  //     action.screenshotLink = screenshotLink;
+  // }, 30); // Delay of 30 ms
+};
+
+
 recorder.onmousedown = function (event) {
   if (event.target === core.cover_div ||
       event.pageX >= 160 || event.pageY >= 210)
@@ -246,6 +292,7 @@ recorder.endRecording = function () {
 
   // Remove event listeners
   recorder.LISTENERS.forEach(function (name) {
+    console.log("removing event listeners")
     document.removeEventListener(name, recorder['on' + name], true);
     document.removeEventListener(name, recorder['on' + name], false);
   });

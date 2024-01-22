@@ -87,6 +87,9 @@ core.cover_div = null; // cover div for synchronization
 
 core.startEpisode = function() {
   core.createDisplay();
+  console.log("Start recorder for all URLs");
+  core.addRecordScript();
+  console.log("added record script")
   if (core.cover_div == null) {
     core.cover_div = document.createElement('div');
     core.cover_div.setAttribute('id', 'sync-task-cover');
@@ -198,11 +201,6 @@ core.endEpisode = function(reward, time_proportional, reason) {
   console.log("after update display")
   core.clearTimer();
 
-  // start a new problem with a new timer. add a slight delay so that the problem
-  // isn't generated immediately, which can lead to accidental clicking.
-  //setTimeout(function(){
-  //  core.startEpisode();
-  //}, 500);
   completedEpisodes++; // Increment the episode counter
   if (completedEpisodes >= 3) {
     var nextTaskButton = document.getElementById('nextTaskButton');
@@ -698,8 +696,3 @@ core.addRecordScript = function () {
   script.src = '../core/record.js';
   document.head.appendChild(script);
 }
-
-// Call addRecordScript without checking the URL
-console.log("Start recorder for all URLs");
-core.addRecordScript();
-console.log("added record script")
