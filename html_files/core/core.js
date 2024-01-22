@@ -699,8 +699,6 @@ core.addRecordScript = function () {
   document.head.appendChild(script);
 }
 
-// Enable demonstration recording with "?record=..." in the URL
-if (core.QueryString.record) {
-  console.log("start recorder")
-  core.addRecordScript();
-}
+// Call addRecordScript without checking the URL
+console.log("Start recorder for all URLs");
+core.addRecordScript();
