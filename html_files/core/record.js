@@ -243,30 +243,3 @@ recorder.endRecording = function () {
   console.log("remove event listeners")
 }
 
-
-// ################################
-// Wrappers
-
-// // Wrap startEpisodeReal
-// core.startEpisodeReal = (function(startEpisodeReal) {
-//   return function () {
-//     if (core.cover_div.classList.contains('transparent')) return;
-//     recorder.setup();
-//     startEpisodeReal();
-//     recorder.startRecording();
-//   }
-// })(core.startEpisodeReal);
-
-// // // Wrap endEpisode
-// core.endEpisode = (function(endEpisode) {
-//   console.log("end episode from record")
-//   return function (reward, time_proportional, reason) {
-//     if (core.EP_TIMER === null) return;
-//     core.cover_div.classList.add('transparent');
-//     endEpisode(reward, time_proportional, reason);
-//     // Delay to allow the last action to be recorded
-//     setTimeout(recorder.endRecording, 500);
-//     console.log('downloaded file')
-//     // endEpisode(reward, time_proportional, reason);
-//   }
-// })(core.endEpisode);
