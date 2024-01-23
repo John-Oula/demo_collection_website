@@ -9,7 +9,9 @@
   - dom: DOM structure
   - action: action performed at that moment
   -link to screenshot
-  - current view port coordinates
+  - current brwoser view port coordinates
+  -screen width
+  -screen height
 * reward
 
 */
@@ -114,21 +116,24 @@ recorder.addState = function(event, action) {
   console.log('Action:', state.action);
 
   // If action type is 'click', delay the screenshot capture
-  if (action && action.type === 'click') {
-    setTimeout(function() {
-      console.log("taking screenshot")
+  // If action type is 'click', delay the screenshot capture
+if (action && action.type === 'click') {
+  // Introduce a delay before taking the screenshot
+  setTimeout(function() {
+      console.log("taking screenshot");
       var screenshotFileName = 'click_' + Date.now();
       recorder.takeScreenshot(screenshotFileName);
-      console.log("screenshot file name",screenshotFileName)
-      // Update the last state object with the screenshot link
-      console.log("length of states",recorder.data.states.length)
-      if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
-        recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
-      }
-    }, 10); // Delay of 30 ms
-  }
-};
+      console.log("screenshot file name", screenshotFileName);
 
+      // Update the last state object with the screenshot link
+      console.log("length of states", recorder.data.states.length);
+      if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
+          recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
+      }
+  }, 300); // Delay of 300 ms (adjust as needed)
+}
+
+};
 
 // Actions
 recorder.ondblclick = function (event) {
