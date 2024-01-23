@@ -68,10 +68,20 @@ recorder.setup = function () {
 
 // Start recording the episode
 recorder.startRecording = function () {
+  // Initialise the data
   recorder.data = {};
+  // Get all the relevant data for start of episode: taskname,screen width,screen height,starting dom
   recorder.data.taskName = recorder.taskName;
   recorder.data.screen_width = window.screen.width;
   recorder.data.screen_height = window.screen.height;
+  //take the screenshot at the start of the episode
+  console.log("taking screenshot")
+  var screenshotFileName = 'click_' + Date.now();
+  recorder.takeScreenshot(screenshotFileName);
+  recorder.data.startscreenshot = screenshotFileName
+  console.log("screenshot file name",recorder.data.startscreenshot)
+  recorder.data.startDom = core.getDOMInfo();
+  // Get utterance
   var utterance = core.getUtterance();
   if (typeof utterance === 'string') {
     recorder.data.utterance = utterance;
@@ -84,35 +94,6 @@ recorder.startRecording = function () {
   recorder.addState(null, null);
 }
 
-// // Add a state to the recording data
-// recorder.addState = function (event, action) {
-//   if (!recorder.isRecording) return;
-//   if (event && action)
-//     action.timing = event.eventPhase;
-//   console.log('Adding state', action);
-//   var state = {
-//     'time': new Date().getTime() - core.ept0,
-//     'action': action,
-//   };
-//   if (event)
-//     event.target.dataset.recording_target = true;
-//   state.dom = core.getDOMInfo();
-//   if (event)
-//     delete event.target.dataset.recording_target;
-//   recorder.data.states.push(state);
-
-//     // Delay only the screenshot capture
-//   setTimeout(function() {
-//     var screenshotFileName = 'click_' + Date.now();
-//     recorder.takeScreenshot(screenshotFileName);
-//     var screenshotLink = screenshotFileName + '.png';
-//     console.log("Screenshot taken", screenshotLink);
-
-//     // Update the action object with screenshot link
-//     action.screenshotLink = screenshotLink;
-// }, 30); // Delay of 30 ms
-// }
-
 recorder.addState = function(event, action) {
   if (!recorder.isRecording) return;
   if (event && action) action.timing = event.eventPhase;
@@ -124,7 +105,6 @@ recorder.addState = function(event, action) {
     'screenshot': 'pending', // Placeholder
     'browserPosition': { 'x': window.screenX, 'y': window.screenY }
   };
-
   if (event) event.target.dataset.recording_target = true;
   state.dom = core.getDOMInfo();
   if (event) delete event.target.dataset.recording_target;
