@@ -70,6 +70,8 @@ recorder.setup = function () {
 recorder.startRecording = function () {
   recorder.data = {};
   recorder.data.taskName = recorder.taskName;
+  recorder.data.screen_width = window.screen.width;
+  recorder.data.screen_height = window.screen.height;
   var utterance = core.getUtterance();
   if (typeof utterance === 'string') {
     recorder.data.utterance = utterance;
