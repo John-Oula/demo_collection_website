@@ -49,9 +49,11 @@ recorder.takeScreenshot = function(screenshotFileName) {
       document.body.removeChild(link);
 
       recorder.canTakeScreenshot = true;
-      console.log("sever input data",canvas.toDataURL("image/png"))
       // Pass the screenshot data to the sendScreenshotToServer function
-      recorder.sendScreenshotToServer(image);
+      recorder.screenshots.push({fileName: screenshotFileName, data: image});
+      // recorder.sendScreenshotToServer(image,screenshotFileName);
+      console.log("screenshot added to queue")
+      console.log(recorder.screenshots)
   });
 };
 
@@ -76,6 +78,7 @@ recorder.setup = function () {
 recorder.startRecording = function () {
   // Initialise the data
   recorder.data = {};
+  recorder.screenshots = [];
   // Get all the relevant data for start of episode: taskname,screen width,screen height,starting dom
   recorder.data.taskName = recorder.taskName;
   recorder.data.screen_width = window.screen.width;
@@ -283,47 +286,61 @@ recorder.endRecording = function () {
     document.removeEventListener(name, recorder['on' + name], false);
   });
   console.log("remove event listeners")
+  // recorder.sendScreenshotsToServer(recorder.screenshots)
+  setTimeout(function() {
+    recorder.sendScreenshotsToServer(recorder.screenshots);
+  }, 10); // 10 seconds delay
 }
 
-recorder.sendScreenshotToServer = function(screenshotData) {
-  // Prepare the data to be sent
+// recorder.sendScreenshotToServer = function(screenshotData, screenshotFileName) {
+//   console.log("Sending screenshot to server");
 
-  $.ajax({
-    type: "POST",
-    url: "http://localhost:5000/hook",
-    data:{
-      imageBase64: screenshotData
-    },
-    xhrFields: {
-      withCredentials: true
-   },
-   crossDomain: true,
-  }).done(function() {
-    console.log('sent');
+//   $.ajax({
+//     type: "POST",
+//     url: "http://localhost:5000/hook",
+//     data: {
+//       imageBase64: screenshotData,
+//       imageName: screenshotFileName
+//     },
+//     xhrFields: {
+//       withCredentials: true
+//     },
+//     crossDomain: true
+//   }).done(function(response) {
+//     console.log('Screenshot sent successfully:', response);
+//   }).fail(function(jqXHR, textStatus) {
+//     console.log('Failed to send screenshot:', textStatus);
+//   });
+// }
+
+recorder.sendScreenshotsToServer = function(screenshots) {
+  console.log("Sending screenshots to server");
+  console.log("screenshots array",screenshots)
+
+  // Iterate through each screenshot in the array
+  screenshots.forEach(function(screenshot, index) {
+    // Delay the execution for each screenshot
+    setTimeout(function() {
+      $.ajax({
+        type: "POST",
+        url: "http://localhost:5000/hook",
+        data: {
+          imageBase64: screenshot.data,
+          imageName: screenshot.fileName
+        },
+        xhrFields: {
+          withCredentials: true
+        },
+        crossDomain: true
+      }).done(function(response) {
+        console.log('Screenshot sent successfully:', response);
+      }).fail(function(jqXHR, textStatus) {
+        console.log('Failed to send screenshot:', textStatus);
+      });
+    }, 1000 * index); // Delay of 1 second per screenshot
   });
 }
 
-// recorder.sendScreenshotToServer = function(screenshotData) {
-//   // Prepare the data to be sent
-//   var data = { screenshot: screenshotData };
-
-//   // Send the data to the server
-//   fetch('/upload_screenshot', {
-//       method: 'POST',
-//       headers: {
-//           'Content-Type': 'application/json'
-//       },
-//       body: JSON.stringify(data)
-//   })
-//   .then(response => {
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! Status: ${response.status}`);
-//     }
-//     return response.json();
-//   })
-//   .then(data => console.log('Success:', data))
-//   .catch((error) => console.error('Error:', error));
-// }
 
 
 

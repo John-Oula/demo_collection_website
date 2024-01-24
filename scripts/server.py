@@ -20,14 +20,15 @@ CORS(app, resources={r"/hook": {"origins": "http://127.0.0.1:5500"}})
 @cross_origin(supports_credentials=True)
 def get_image():
     image_b64 = request.values['imageBase64']
+    image_name = request.values['imageName']  # Receive the screenshot file name
     image_data = base64.b64decode(re.sub('^data:image/.+;base64,', '', image_b64))
     image_PIL = Image.open(BytesIO(image_data))
     image_np = np.array(image_PIL)
     print('Image received: {}'.format(image_np.shape))
+    print('Image name',image_name)
     
      # Save the image to a temporary file in the same directory
-    temp_file_path = "temp_image.png"  # Temporary file name
-    image_PIL.save(temp_file_path, format='PNG')
+    image_PIL.save(image_name + ".png", format='PNG')
     
         # Authenticate with Google Drive API
     SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -39,7 +40,7 @@ def get_image():
     # Build the Google Drive service
     drive_service = build('drive', 'v3', credentials=credentials)
 
-    upload_file_image("temp_image", '/Users/encord/Documents/Code/Genie/demo_collection_website/temp_image.png', parent_folder_id='1BzniPTgy_KDy36sS_hufqBEI3YCEvYPq')
+    upload_file_image(image_name, f'/Users/encord/Documents/Code/Genie/demo_collection_website/{image_name}.png', parent_folder_id='1BzniPTgy_KDy36sS_hufqBEI3YCEvYPq')
     print("uploaded file")
     return ''
 
