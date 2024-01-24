@@ -134,12 +134,6 @@ core.startEpisodeReal = function () {
   console.log("start recording")
   recorder.setup();
   recorder.startRecording();
-  //capture the starting screenshot and dom state
-  var initialStateAction = {
-      'type': 'start',
-      'timing': core.ept0 // Since this is the start, the timing is set to 0
-  };
-  recorder.addState(null, initialStateAction);
 }
 
 core.create_button = function() {

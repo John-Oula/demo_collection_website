@@ -39,7 +39,8 @@ recorder.takeScreenshot = function(screenshotFileName) {
   recorder.isTakingScreenshot = true;
 
   html2canvas(document.body).then(canvas => {
-      var image = canvas.toDataURL("image/png");
+      // var image = canvas.toDataURL("image/png");
+      var image = canvas.toDataURL();
       var link = document.createElement('a');
       link.href = image;
       link.download = screenshotFileName + '.png';
@@ -48,6 +49,9 @@ recorder.takeScreenshot = function(screenshotFileName) {
       document.body.removeChild(link);
 
       recorder.canTakeScreenshot = true;
+      console.log("sever input data",canvas.toDataURL("image/png"))
+      // Pass the screenshot data to the sendScreenshotToServer function
+      recorder.sendScreenshotToServer(image);
   });
 };
 
@@ -280,4 +284,48 @@ recorder.endRecording = function () {
   });
   console.log("remove event listeners")
 }
+
+recorder.sendScreenshotToServer = function(screenshotData) {
+  // Prepare the data to be sent
+
+  $.ajax({
+    type: "POST",
+    url: "http://localhost:5000/hook",
+    data:{
+      imageBase64: screenshotData
+    },
+    xhrFields: {
+      withCredentials: true
+   },
+   crossDomain: true,
+  }).done(function() {
+    console.log('sent');
+  });
+}
+
+// recorder.sendScreenshotToServer = function(screenshotData) {
+//   // Prepare the data to be sent
+//   var data = { screenshot: screenshotData };
+
+//   // Send the data to the server
+//   fetch('/upload_screenshot', {
+//       method: 'POST',
+//       headers: {
+//           'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify(data)
+//   })
+//   .then(response => {
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! Status: ${response.status}`);
+//     }
+//     return response.json();
+//   })
+//   .then(data => console.log('Success:', data))
+//   .catch((error) => console.error('Error:', error));
+// }
+
+
+
+
 
