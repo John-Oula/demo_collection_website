@@ -9,12 +9,17 @@ import numpy as np
 import re
 from PIL import Image
 from flask_cors import CORS,cross_origin
+import json
+import tempfile
 
 app = Flask(__name__)
 # CORS(app, support_credentials=True)
 # CORS(app, resources={r"/hook": {"origins": "http://localhost:8000"}})
-CORS(app, resources={r"/hook": {"origins": "http://127.0.0.1:5500"}})
-
+# CORS(app, resources={r"/hook": {"origins": "http://127.0.0.1:5500"}})
+CORS(app, resources={
+    r"/hook": {"origins": "http://127.0.0.1:5500"},
+    r"/upload_json": {"origins": "http://127.0.0.1:5500"}
+})
 
 @app.route('/hook', methods=['POST'])
 @cross_origin(supports_credentials=True)
@@ -43,6 +48,26 @@ def get_image():
     upload_file_image(image_name, f'/Users/encord/Documents/Code/Genie/demo_collection_website/{image_name}.png', parent_folder_id='1BzniPTgy_KDy36sS_hufqBEI3YCEvYPq')
     print("uploaded file")
     return ''
+
+@app.route('/upload_json', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def upload_json():
+    data = request.get_json()
+    json_content = json.dumps(data)
+
+    # Save JSON data to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        temp_file.write(json_content.encode('utf-8'))
+        temp_file_path = temp_file.name
+
+    print("temp file path",temp_file_path)
+    # Upload to Google Drive
+    uploaded_file_id = upload_file_json('json_data_two', temp_file_path, parent_folder_id='1BzniPTgy_KDy36sS_hufqBEI3YCEvYPq')
+    print(f'Uploaded file ID: {uploaded_file_id}')
+    print("uploaded json")
+
+    return {"status": "success", "file_id": uploaded_file_id}, 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)

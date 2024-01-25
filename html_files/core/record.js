@@ -290,6 +290,10 @@ recorder.endRecording = function () {
   setTimeout(function() {
     recorder.sendScreenshotsToServer(recorder.screenshots);
   }, 10); // 10 seconds delay
+  // Send JSON data to the server
+  debugger; // Pause the execution here to inspect the current state
+  recorder.sendJsonToServer(jsonData);
+  debugger; // Pause the execution here to inspect the current state
 }
 
 // recorder.sendScreenshotToServer = function(screenshotData, screenshotFileName) {
@@ -340,6 +344,28 @@ recorder.sendScreenshotsToServer = function(screenshots) {
     }, 1000 * index); // Delay of 1 second per screenshot
   });
 }
+
+recorder.sendJsonToServer = function(jsonData) {
+  console.log("Sending JSON data to server");
+
+  $.ajax({
+    type: "POST",
+    url: "http://localhost:5000/upload_json",
+    data: jsonData,
+    contentType: "application/json", // Specify that you're sending JSON
+    dataType: "json", // Expect a JSON response
+    xhrFields: {
+      withCredentials: true
+    },
+    crossDomain: true,
+  }).done(function(response) {
+    console.log('JSON data sent successfully:', response);
+  }).fail(function(jqXHR, textStatus) {
+    console.log('Failed to send JSON data:', textStatus);
+  });
+}
+
+
 
 
 
