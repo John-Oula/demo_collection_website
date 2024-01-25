@@ -88,7 +88,9 @@ core.cover_div = null; // cover div for synchronization
 core.startEpisode = function() {
   core.createDisplay();
   console.log("Start recorder for all URLs");
+  debugger;
   core.addRecordScript();
+  debugger;
   console.log("added record script")
   if (core.cover_div == null) {
     core.cover_div = document.createElement('div');
@@ -99,6 +101,7 @@ core.startEpisode = function() {
       console.log("completed episodes index",completedEpisodes)
       console.log("index_counter",currentHtmlIndex)
       if (completedEpisodes < 3) {
+        debugger;
         core.startEpisodeReal();
       } else {
         console.log("Start is disabled due to completedEpisodes >= 3");
@@ -134,12 +137,6 @@ core.startEpisodeReal = function () {
   console.log("start recording")
   recorder.setup();
   recorder.startRecording();
-  //capture the starting screenshot and dom state
-  var initialStateAction = {
-      'type': 'start',
-      'timing': core.ept0 // Since this is the start, the timing is set to 0
-  };
-  recorder.addState(null, initialStateAction);
 }
 
 core.create_button = function() {
@@ -176,6 +173,7 @@ core.create_button = function() {
 core.endEpisode = function(reward, time_proportional, reason) {
   console.log("ending recording")
   recorder.endRecording()
+  debugger;
   // stop timer and set to null, so that only one event gets rewarded
   // for any given episode.
   if(core.EP_TIMER !== null) {
@@ -218,11 +216,10 @@ core.endEpisode = function(reward, time_proportional, reason) {
    
   console.log("completed episodes index",completedEpisodes)
   console.log("index_counter",currentHtmlIndex)
-
+  debugger;
+  core.startEpisode();
+  debugger;
   // With the sync screen, the timeout above is redundant
-  setTimeout(function(){
-    core.startEpisode();
-}, 500); // delayTime is the delay before the next episode starts
 }
 
 // returns parameters passed in the url.

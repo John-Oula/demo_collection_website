@@ -39,7 +39,8 @@ recorder.takeScreenshot = function(screenshotFileName) {
   recorder.isTakingScreenshot = true;
 
   html2canvas(document.body).then(canvas => {
-      var image = canvas.toDataURL("image/png");
+      // var image = canvas.toDataURL("image/png");
+      var image = canvas.toDataURL();
       var link = document.createElement('a');
       link.href = image;
       link.download = screenshotFileName + '.png';
@@ -48,6 +49,11 @@ recorder.takeScreenshot = function(screenshotFileName) {
       document.body.removeChild(link);
 
       recorder.canTakeScreenshot = true;
+      // Pass the screenshot data to the sendScreenshotToServer function
+      recorder.screenshots.push({fileName: screenshotFileName, data: image});
+      // recorder.sendScreenshotToServer(image,screenshotFileName);
+      console.log("screenshot added to queue")
+      console.log(recorder.screenshots)
   });
 };
 
@@ -72,6 +78,7 @@ recorder.setup = function () {
 recorder.startRecording = function () {
   // Initialise the data
   recorder.data = {};
+  recorder.screenshots = [];
   // Get all the relevant data for start of episode: taskname,screen width,screen height,starting dom
   recorder.data.taskName = recorder.taskName;
   recorder.data.screen_width = window.screen.width;
@@ -279,5 +286,89 @@ recorder.endRecording = function () {
     document.removeEventListener(name, recorder['on' + name], false);
   });
   console.log("remove event listeners")
+  // recorder.sendScreenshotsToServer(recorder.screenshots)
+  setTimeout(function() {
+    recorder.sendScreenshotsToServer(recorder.screenshots);
+  }, 10); // 10 seconds delay
+  // Send JSON data to the server
+  debugger; // Pause the execution here to inspect the current state
+  recorder.sendJsonToServer(jsonData);
+  debugger; // Pause the execution here to inspect the current state
 }
+
+// recorder.sendScreenshotToServer = function(screenshotData, screenshotFileName) {
+//   console.log("Sending screenshot to server");
+
+//   $.ajax({
+//     type: "POST",
+//     url: "http://localhost:5000/hook",
+//     data: {
+//       imageBase64: screenshotData,
+//       imageName: screenshotFileName
+//     },
+//     xhrFields: {
+//       withCredentials: true
+//     },
+//     crossDomain: true
+//   }).done(function(response) {
+//     console.log('Screenshot sent successfully:', response);
+//   }).fail(function(jqXHR, textStatus) {
+//     console.log('Failed to send screenshot:', textStatus);
+//   });
+// }
+
+recorder.sendScreenshotsToServer = function(screenshots) {
+  console.log("Sending screenshots to server");
+  console.log("screenshots array",screenshots)
+
+  // Iterate through each screenshot in the array
+  screenshots.forEach(function(screenshot, index) {
+    // Delay the execution for each screenshot
+    setTimeout(function() {
+      $.ajax({
+        type: "POST",
+        url: "http://localhost:5000/hook",
+        data: {
+          imageBase64: screenshot.data,
+          imageName: screenshot.fileName
+        },
+        xhrFields: {
+          withCredentials: true
+        },
+        crossDomain: true
+      }).done(function(response) {
+        console.log('Screenshot sent successfully:', response);
+      }).fail(function(jqXHR, textStatus) {
+        console.log('Failed to send screenshot:', textStatus);
+      });
+    }, 1000 * index); // Delay of 1 second per screenshot
+  });
+}
+
+recorder.sendJsonToServer = function(jsonData) {
+  console.log("Sending JSON data to server");
+
+  $.ajax({
+    type: "POST",
+    url: "http://localhost:5000/upload_json",
+    data: jsonData,
+    contentType: "application/json", // Specify that you're sending JSON
+    dataType: "json", // Expect a JSON response
+    xhrFields: {
+      withCredentials: true
+    },
+    crossDomain: true,
+  }).done(function(response) {
+    console.log('JSON data sent successfully:', response);
+  }).fail(function(jqXHR, textStatus) {
+    console.log('Failed to send JSON data:', textStatus);
+  });
+}
+
+
+
+
+
+
+
 
