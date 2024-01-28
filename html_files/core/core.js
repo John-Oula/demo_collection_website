@@ -1,20 +1,55 @@
-var core = {};
-// set html index to 0 if null what is happening in the else situation?
+var core = {
+};
+
+// Completed episodes value retrieval
+core.completedEpisodes = localStorage.getItem('completedEpisodes');
+if (core.completedEpisodes === null || core.completedEpisodes === undefined) {
+  core.completedEpisodes = 0;
+} else {
+  core.completedEpisodes = parseInt(core.completedEpisodes, 10); // Convert the stored string back to a number
+}
+
+// Store the completedEpisodes value in localStorage
+localStorage.setItem('completedEpisodes', core.completedEpisodes);
+console.log("page reloaded and here is number of completed episodes", core.completedEpisodes);
+
+
+// currentHtmlIndex value retrieval
 var currentHtmlIndex = localStorage.getItem('currentHtmlIndex');
 if (currentHtmlIndex === null) {
   currentHtmlIndex = 0;
 } else {
   currentHtmlIndex = parseInt(currentHtmlIndex, 10); // Convert to integer
 }
-var completedEpisodes = 0; // Counter for completed episodes
+
 // Current index for the HTML files array
 var htmlFiles = [
-    '../miniwob/choose-date-easy.html?record=true',
     '../miniwob/click-tab-2-easy.html?record=true',
   '../miniwob/choose-date-medium.html?record=true',
   '../miniwob/click-tab-2-medium.html?record=true',
   '../miniwob/click-test-transfer.html?record=true'
 ];
+
+//map the task to its correct key - the ground truth of mapping is in the airtable
+var fileMap = {
+  'choose-date-easy':0,
+  'click-tab-2-easy': 1,
+  'choose-date-medium': 2,
+  'click-tab-2-medium': 3,
+  'click-test-transfer': 4
+};
+
+core.create_button = function() {
+  // Check if the button already exists to avoid creating duplicates
+  if (!core.nextTaskButton) {
+    core.nextTaskButton = document.createElement('button');
+    core.nextTaskButton.textContent = 'Next Task';
+    core.nextTaskButton.style.display = 'none'; // Initially hide the button
+    document.body.appendChild(core.nextTaskButton); // Append the button to the body
+  }
+}
+
+
 
 // various common utilities
 
@@ -88,31 +123,51 @@ core.cover_div = null; // cover div for synchronization
 core.startEpisode = function() {
   core.createDisplay();
   console.log("Start recorder for all URLs");
-  debugger;
+  // debugger;
+  console.log("number of episodes before adding script",core.completedEpisodes)
   core.addRecordScript();
-  debugger;
+  console.log("number of episodes",core.completedEpisodes)
+  // debugger;
   console.log("added record script")
   if (core.cover_div == null) {
     core.cover_div = document.createElement('div');
     core.cover_div.setAttribute('id', 'sync-task-cover');
     core.cover_div.innerHTML = 'START';
     core.cover_div.onclick = function () {
-      console.log("start clicked");
-      console.log("completed episodes index",completedEpisodes)
-      console.log("index_counter",currentHtmlIndex)
-      if (completedEpisodes < 3) {
-        debugger;
+      // console.log("start clicked");
+      // console.log("completed episodes index",core.completedEpisodes)
+      // console.log("index_counter",currentHtmlIndex)
+      // core.startEpisodeReal();
+      // Your existing code here
+      if (core.completedEpisodes >= 3) {
+        //Display the "Next Task" button
+        core.nextTaskButton.style.display = 'block'; // Make the button visible
+        core.nextTaskButton.addEventListener('click', function() {
+          // Reset the completed episodes counter after next task is clicked
+          core.completedEpisodes = 0;
+          localStorage.setItem('completedEpisodes', core.completedEpisodes.toString()); // Also reset in localStorage
+          
+          // Redirect and move to the next HTML file
+          currentHtmlIndex = (currentHtmlIndex + 1) % htmlFiles.length;
+          localStorage.setItem('currentHtmlIndex', currentHtmlIndex.toString());
+          window.location.href = htmlFiles[currentHtmlIndex];
+        });
+        if (core.cover_div) {
+          console.log("Start is disabled due to completedEpisodes >= 3");
+          core.cover_div.innerHTML = 'Press Next Task'; // Update the cover div text if needed
+        }
+      }
+      else{
+        core.nextTaskButton.style.display = 'none';
         core.startEpisodeReal();
-      } else {
-        console.log("Start is disabled due to completedEpisodes >= 3");
-        core.cover_div.innerHTML = 'Press Next Task';
-        // Optionally, provide some visual feedback that the start is disabled
       }
     };
     document.body.appendChild(core.cover_div);
   }
   core.cover_div.style.display = 'block';
 }
+
+
 
 core.startEpisodeReal = function () {
   core.resetRefCode();
@@ -135,47 +190,16 @@ core.startEpisodeReal = function () {
   }, core.EPISODE_MAX_TIME);
 
   console.log("start recording")
+  //set up and add the recording
   recorder.setup();
   recorder.startRecording();
-}
-
-core.create_button = function() {
-  var existingButton = document.getElementById('nextTaskButton');
-  if (existingButton) {
-    existingButton.remove(); // Remove existing button to avoid duplicates
-  }
-
-  var button = document.createElement('button');
-  button.id = 'nextTaskButton';
-  button.textContent = 'Next Task';
-  button.style.display = 'none'; // Initially hide the button
-
-  button.addEventListener('click', function() {
-    // Reset the completed episodes counter after next task is clicked
-    completedEpisodes = 0;
-    // Hide the button
-    button.style.display = 'none';
-
-    // Redirect and move to the next HTML file
-    currentHtmlIndex = (currentHtmlIndex + 1) % htmlFiles.length;
-    console.log("currentHtmlIndex increasing",currentHtmlIndex)
-    // Save the updated index to localStorage
-    localStorage.setItem('currentHtmlIndex', currentHtmlIndex);
-    window.location.href = htmlFiles[currentHtmlIndex];
-    console.log("Navigating to", htmlFiles[currentHtmlIndex]);
-  });
-
-  // Append the button to a specific element
-  document.body.appendChild(button);
 }
 
 
 core.endEpisode = function(reward, time_proportional, reason) {
   console.log("ending recording")
-  recorder.endRecording()
-  debugger;
-  // stop timer and set to null, so that only one event gets rewarded
-  // for any given episode.
+  recorder.endRecording() //end recording
+  // debugger;
   if(core.EP_TIMER !== null) {
     clearTimeout(core.EP_TIMER);
     core.EP_TIMER = null;
@@ -205,20 +229,17 @@ core.endEpisode = function(reward, time_proportional, reason) {
   console.log("after update display")
   core.clearTimer();
 
-  completedEpisodes++; // Increment the episode counter
-  if (completedEpisodes >= 3) {
-    var nextTaskButton = document.getElementById('nextTaskButton');
-    if (nextTaskButton) {
-      nextTaskButton.style.display = 'block'; // Show the button
-    }
-  }
+  core.completedEpisodes++; // Increment the episode counter
+  localStorage.setItem('completedEpisodes', core.completedEpisodes.toString());
+  console.log("increasing episode number",core.completedEpisodes)
    // Check if two episodes have been completed
-   
-  console.log("completed episodes index",completedEpisodes)
+  // debugger;
+  console.log("completed episodes index",core.completedEpisodes)
   console.log("index_counter",currentHtmlIndex)
-  debugger;
+  // debugger;
+  // debugger;
   core.startEpisode();
-  debugger;
+  // debugger;
   // With the sync screen, the timeout above is redundant
 }
 

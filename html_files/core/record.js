@@ -132,9 +132,10 @@ if (action && action.type === 'click') {
       recorder.takeScreenshot(screenshotFileName);
       console.log("screenshot file name", screenshotFileName);
 
-      // Update the last state object with the screenshot link
-      console.log("length of states", recorder.data.states.length);
+      
       if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
+            // Update the last state object with the screenshot link
+          console.log("length of states", recorder.data.states.length);
           recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
       }
   }, 300); // Delay of 300 ms (adjust as needed)
@@ -221,35 +222,6 @@ recorder.onscroll = function (event) {
   });
 }
 
-// End recording the episode
-// recorder.endRecording = function () {
-//   recorder.data.reward = WOB_REWARD_GLOBAL;
-//   recorder.data.rawReward = WOB_RAW_REWARD_GLOBAL;
-//   // Send the data to the server
-//   recorder.isRecording = false;
-//   var data = recorder.data;
-//   recorder.data = {};   // Prevent future addition
-//   console.log(data);
-//   var req = new XMLHttpRequest();
-//   req.open('POST', recorder.server);
-//   req.setRequestHeader('Content-type', 'text/plain');
-//   req.onreadystatechange = function () {
-//     if (req.readyState === XMLHttpRequest.DONE) {
-//       var msg = document.getElementById('server-reply');
-//       if (req.status === 200) {
-//         msg.setAttribute('style', 'color:green');
-//         msg.textContent = 'OK: ' + req.responseText;
-//       } else {
-//         msg.setAttribute('style', 'color:red');
-//         msg.textContent = 'ERROR: ' + req.statusText;
-//       }
-//     }
-//   }
-//   req.send(JSON.stringify(data));
-//   // Make it ready for the next episode
-//   core.cover_div.classList.remove('transparent');
-// }
-
 recorder.endRecording = function () {
   recorder.data.reward = WOB_REWARD_GLOBAL;
   recorder.data.rawReward = WOB_RAW_REWARD_GLOBAL;
@@ -288,38 +260,19 @@ recorder.endRecording = function () {
   console.log("remove event listeners")
   // recorder.sendScreenshotsToServer(recorder.screenshots)
   setTimeout(function() {
+    console.log("screenshot episode number",core.completedEpisodes)
     recorder.sendScreenshotsToServer(recorder.screenshots);
   }, 10); // 10 seconds delay
-  // Send JSON data to the server
-  debugger; // Pause the execution here to inspect the current state
+  // debugger;
+  console.log("json episode number",core.completedEpisodes)
   recorder.sendJsonToServer(jsonData);
-  debugger; // Pause the execution here to inspect the current state
+  // debugger;
 }
-
-// recorder.sendScreenshotToServer = function(screenshotData, screenshotFileName) {
-//   console.log("Sending screenshot to server");
-
-//   $.ajax({
-//     type: "POST",
-//     url: "http://localhost:5000/hook",
-//     data: {
-//       imageBase64: screenshotData,
-//       imageName: screenshotFileName
-//     },
-//     xhrFields: {
-//       withCredentials: true
-//     },
-//     crossDomain: true
-//   }).done(function(response) {
-//     console.log('Screenshot sent successfully:', response);
-//   }).fail(function(jqXHR, textStatus) {
-//     console.log('Failed to send screenshot:', textStatus);
-//   });
-// }
 
 recorder.sendScreenshotsToServer = function(screenshots) {
   console.log("Sending screenshots to server");
   console.log("screenshots array",screenshots)
+  console.log("completed episodes number", core.completedEpisodes)
 
   // Iterate through each screenshot in the array
   screenshots.forEach(function(screenshot, index) {
@@ -330,7 +283,9 @@ recorder.sendScreenshotsToServer = function(screenshots) {
         url: "http://localhost:5000/hook",
         data: {
           imageBase64: screenshot.data,
-          imageName: screenshot.fileName
+          imageName: screenshot.fileName,
+          taskName: recorder.taskName,
+          completedEpisodes: core.completedEpisodes
         },
         xhrFields: {
           withCredentials: true
@@ -347,11 +302,16 @@ recorder.sendScreenshotsToServer = function(screenshots) {
 
 recorder.sendJsonToServer = function(jsonData) {
   console.log("Sending JSON data to server");
+  console.log("completed episodes number", core.completedEpisodes)
 
   $.ajax({
     type: "POST",
     url: "http://localhost:5000/upload_json",
-    data: jsonData,
+    data: JSON.stringify({
+      jsonData: jsonData,
+      taskName: recorder.taskName,
+      completedEpisodes: core.completedEpisodes
+    }),
     contentType: "application/json", // Specify that you're sending JSON
     dataType: "json", // Expect a JSON response
     xhrFields: {
@@ -361,8 +321,11 @@ recorder.sendJsonToServer = function(jsonData) {
   }).done(function(response) {
     console.log('JSON data sent successfully:', response);
   }).fail(function(jqXHR, textStatus) {
+    // debugger;
     console.log('Failed to send JSON data:', textStatus);
+    // debugger;
   });
+  // debugger;
 }
 
 

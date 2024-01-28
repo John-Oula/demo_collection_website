@@ -4,16 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        h1 {
+            font-size: 2em; /* Makes the heading larger */
+            text-align: center; /* Centers the heading */
+            margin-bottom: 20px; /* Adds some space below the heading */
+        }
+        #startButton {
+            font-size: 1.5em; /* Increases the font size of the button */
+            padding: 10px 20px; /* Adds padding inside the button for better visibility */
+            cursor: pointer; /* Changes the cursor to a pointer when hovering over the button */
+        }
+        #nameInput {
+            font-size: 1.2em; /* Increases the font size of the input */
+            margin-bottom: 20px; /* Adds some space below the input field */
+            display: block; /* Makes the input block level to take its own line */
+            margin-left: auto; /* Centers the input field */
+            margin-right: auto; /* Centers the input field */
+            width: 50%; /* Sets the width of the input field */
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to Genie AI dataset collection</h1>
-    <button id="startButton">Start</button>
-
+    <input type="text" id="nameInput" placeholder="Enter your name" />
+    <div id="instructionText">
+        <p>Please enter your name in the box above and click "Start" to begin the data collection process. Follow the instructions on the next pages carefully.</p>
+    </div>
+    <button id="startSessionButton" class="button">Start Session</button>
     <script>
-        // Add a click event listener to the Start button
-        document.getElementById('startButton').addEventListener('click', function () {
-            // Redirect to the HTML page where the core code is executed
-            window.location.href = './html_files/miniwob/choose-date.html';
+        document.getElementById('startSessionButton').addEventListener('click', function () {
+            // Change button text to "Loading Session" and disable it
+            this.textContent = 'Loading Session...';
+            this.disabled = true;
+    
+            // Generate a random number between 0 and 10 billion
+            const randomId = Math.floor(Math.random() * 10000000000);
+    
+            // Retrieve the name entered by the user
+            const name = document.getElementById('nameInput').value;
+    
+            // Create a data object to send to the server
+            const data = {
+                id: randomId,
+                name: name
+            };
+    
+            $.ajax({
+                type: "POST",
+                url: "http://localhost:5000/name_id", // Make sure the URL matches your Flask endpoint
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: "json",
+                xhrFields: {
+                    withCredentials: true
+                },
+                crossDomain: true,
+            }).done(function(response) {
+                console.log('JSON data sent successfully:', response);
+                // Redirect the user to another HTML file after successful data submission
+                window.location.href = './html_files/miniwob/choose-date-easy.html?record=true'; // Update this path to your actual HTML file
+            }).fail(function(jqXHR, textStatus) {
+                console.log('Failed to send JSON data:', textStatus);
+                // Optionally, re-enable the button and change the text back if the request fails
+                document.getElementById('startSessionButton').textContent = 'Start Session';
+                document.getElementById('startSessionButton').disabled = false;
+            });
         });
     </script>
 </body>
