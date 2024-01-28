@@ -35,21 +35,16 @@ recorder.LISTENERS = [
 //Takes a screenshot
 //uses a boolean to make sure no other screenshot can occur while a screenshot is happening
 recorder.takeScreenshot = function(screenshotFileName) {
+  console.log("is taking screenshot",recorder.isTakingScreenshot)
   if (recorder.isTakingScreenshot) return;
-  recorder.isTakingScreenshot = true;
 
   html2canvas(document.body).then(canvas => {
+      recorder.isTakingScreenshot = true;
+      console.log("enter tkaing screenshot")
       // var image = canvas.toDataURL("image/png");
       var image = canvas.toDataURL();
-      var link = document.createElement('a');
-      link.href = image;
-      link.download = screenshotFileName + '.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      recorder.canTakeScreenshot = true;
       // Pass the screenshot data to the sendScreenshotToServer function
+      console.log("screenshot filename before added to queue",screenshotFileName)
       recorder.screenshots.push({fileName: screenshotFileName, data: image});
       // recorder.sendScreenshotToServer(image,screenshotFileName);
       console.log("screenshot added to queue")
@@ -87,6 +82,7 @@ recorder.startRecording = function () {
   console.log("taking screenshot")
   var screenshotFileName = 'click_' + Date.now();
   recorder.takeScreenshot(screenshotFileName);
+  recorder.isTakingScreenshot = false;
   recorder.data.startscreenshot = screenshotFileName
   console.log("screenshot file name",recorder.data.startscreenshot)
   recorder.data.startDom = core.getDOMInfo();
@@ -123,23 +119,18 @@ recorder.addState = function(event, action) {
   console.log('Action:', state.action);
 
   // If action type is 'click', delay the screenshot capture
-  // If action type is 'click', delay the screenshot capture
-if (action && action.type === 'click') {
-  // Introduce a delay before taking the screenshot
-  setTimeout(function() {
-      console.log("taking screenshot");
-      var screenshotFileName = 'click_' + Date.now();
-      recorder.takeScreenshot(screenshotFileName);
-      console.log("screenshot file name", screenshotFileName);
-
-      
-      if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
-            // Update the last state object with the screenshot link
-          console.log("length of states", recorder.data.states.length);
-          recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
-      }
-  }, 300); // Delay of 300 ms (adjust as needed)
-}
+  if (action && action.type === 'click') {
+    console.log("taking screenshot");
+    var screenshotFileName = 'click_' + Date.now();
+    recorder.takeScreenshot(screenshotFileName);
+    recorder.isTakingScreenshot = false;
+    console.log("screenshot file name", screenshotFileName);
+    if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
+          // Update the last state object with the screenshot link
+        console.log("length of states", recorder.data.states.length);
+        recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
+    }
+  }
 
 };
 
@@ -259,11 +250,13 @@ recorder.endRecording = function () {
   });
   console.log("remove event listeners")
   // recorder.sendScreenshotsToServer(recorder.screenshots)
-  setTimeout(function() {
-    console.log("screenshot episode number",core.completedEpisodes)
-    recorder.sendScreenshotsToServer(recorder.screenshots);
-  }, 10); // 10 seconds delay
+  // setTimeout(function() {
+  //   console.log("screenshot episode number",core.completedEpisodes)
+  //   recorder.sendScreenshotsToServer(recorder.screenshots);
+  // }, 10); // 10 seconds delay
   // debugger;
+  console.log("screenshot episode number",core.completedEpisodes)
+  recorder.sendScreenshotsToServer(recorder.screenshots);
   console.log("json episode number",core.completedEpisodes)
   recorder.sendJsonToServer(jsonData);
   // debugger;
@@ -272,7 +265,8 @@ recorder.endRecording = function () {
 recorder.sendScreenshotsToServer = function(screenshots) {
   console.log("Sending screenshots to server");
   console.log("screenshots array",screenshots)
-  console.log("completed episodes number", core.completedEpisodes)
+  console.log("completed episodes number for image server", core.completedEpisodes)
+  // debugger;
 
   // Iterate through each screenshot in the array
   screenshots.forEach(function(screenshot, index) {
@@ -302,7 +296,8 @@ recorder.sendScreenshotsToServer = function(screenshots) {
 
 recorder.sendJsonToServer = function(jsonData) {
   console.log("Sending JSON data to server");
-  console.log("completed episodes number", core.completedEpisodes)
+  console.log("completed episodes number for json server", core.completedEpisodes)
+  // debugger;
 
   $.ajax({
     type: "POST",
