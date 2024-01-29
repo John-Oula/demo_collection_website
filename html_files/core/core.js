@@ -2,6 +2,7 @@ var core = {
 };
 
 // Completed episodes value retrieval
+// For each task type we generate three different versions
 core.completedEpisodes = localStorage.getItem('completedEpisodes');
 if (core.completedEpisodes === null || core.completedEpisodes === undefined) {
   core.completedEpisodes = 0;
@@ -14,7 +15,7 @@ localStorage.setItem('completedEpisodes', core.completedEpisodes);
 console.log("page reloaded and here is number of completed episodes", core.completedEpisodes);
 
 
-// currentHtmlIndex value retrieval
+// currentHtmlIndex value retrieval - use it to index to the right html task file
 var currentHtmlIndex = localStorage.getItem('currentHtmlIndex');
 if (currentHtmlIndex === null) {
   currentHtmlIndex = 0;
@@ -23,6 +24,7 @@ if (currentHtmlIndex === null) {
 }
 
 // Current index for the HTML files array
+//array of task html files
 var htmlFiles = [
     '../miniwob/click-tab-2-easy.html?record=true',
   '../miniwob/choose-date-medium.html?record=true',
@@ -30,7 +32,7 @@ var htmlFiles = [
   '../miniwob/click-test-transfer.html?record=true'
 ];
 
-//map the task to its correct key - the ground truth of mapping is in the airtable
+//Not using this
 var fileMap = {
   'choose-date-easy':0,
   'click-tab-2-easy': 1,
@@ -39,6 +41,7 @@ var fileMap = {
   'click-test-transfer': 4
 };
 
+// Create the next task button that allows user to move to next task html website
 core.create_button = function() {
   // Check if the button already exists to avoid creating duplicates
   if (!core.nextTaskButton) {
@@ -48,9 +51,6 @@ core.create_button = function() {
     document.body.appendChild(core.nextTaskButton); // Append the button to the body
   }
 }
-
-
-
 // various common utilities
 
 // seedrandom.min.js -- https://github.com/davidbau/seedrandom
@@ -120,6 +120,7 @@ core.CD_TIMER = null; // stores timer ID for displaying rewards
 core.ept0 = null; // stores system time when episode begins (so we can time it)
 core.cover_div = null; // cover div for synchronization
 
+//start episode
 core.startEpisode = function() {
   core.createDisplay();
   console.log("Start recorder for all URLs");
@@ -167,8 +168,7 @@ core.startEpisode = function() {
   core.cover_div.style.display = 'block';
 }
 
-
-
+//start the actual episode and allow for user interaction
 core.startEpisodeReal = function () {
   core.resetRefCode();
   genProblem();
@@ -190,15 +190,17 @@ core.startEpisodeReal = function () {
   }, core.EPISODE_MAX_TIME);
 
   console.log("start recording")
-  //set up and add the recording
+  //set up and add the recording to record and collect user interaction data
   recorder.setup();
   recorder.startRecording();
 }
 
 
+// End episode
 core.endEpisode = function(reward, time_proportional, reason) {
+  //end recording
   console.log("ending recording")
-  recorder.endRecording() //end recording
+  recorder.endRecording()
   // debugger;
   if(core.EP_TIMER !== null) {
     clearTimeout(core.EP_TIMER);
@@ -229,15 +231,16 @@ core.endEpisode = function(reward, time_proportional, reason) {
   console.log("after update display")
   core.clearTimer();
 
-  core.completedEpisodes++; // Increment the episode counter
+  // Increment the episode counter
+  core.completedEpisodes++;
   localStorage.setItem('completedEpisodes', core.completedEpisodes.toString());
   console.log("increasing episode number",core.completedEpisodes)
-   // Check if two episodes have been completed
   // debugger;
   console.log("completed episodes index",core.completedEpisodes)
   console.log("index_counter",currentHtmlIndex)
   // debugger;
   // debugger;
+  //Start the next episode
   core.startEpisode();
   // debugger;
   // With the sync screen, the timeout above is redundant
@@ -713,6 +716,7 @@ if (core.QueryString.mode) {
 // ################################
 // Record demonstrations (import core/record.js)
 
+// Add record script
 core.addRecordScript = function () {
   // record script
   var script = document.createElement('script');

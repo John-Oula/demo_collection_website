@@ -99,6 +99,7 @@ recorder.startRecording = function () {
   recorder.addState(null, null);
 }
 
+// Add state
 recorder.addState = function(event, action) {
   if (!recorder.isRecording) return;
   if (event && action) action.timing = event.eventPhase;
@@ -255,13 +256,14 @@ recorder.endRecording = function () {
   //   recorder.sendScreenshotsToServer(recorder.screenshots);
   // }, 10); // 10 seconds delay
   // debugger;
-  console.log("screenshot episode number",core.completedEpisodes)
-  recorder.sendScreenshotsToServer(recorder.screenshots);
   console.log("json episode number",core.completedEpisodes)
   recorder.sendJsonToServer(jsonData);
+  console.log("screenshot episode number",core.completedEpisodes)
+  recorder.sendScreenshotsToServer(recorder.screenshots);
   // debugger;
 }
 
+//Send screenshots to server
 recorder.sendScreenshotsToServer = function(screenshots) {
   console.log("Sending screenshots to server");
   console.log("screenshots array",screenshots)
@@ -290,10 +292,11 @@ recorder.sendScreenshotsToServer = function(screenshots) {
       }).fail(function(jqXHR, textStatus) {
         console.log('Failed to send screenshot:', textStatus);
       });
-    }, 1000 * index); // Delay of 1 second per screenshot
+    }, 100 * index); // Delay of 1 second per screenshot
   });
 }
 
+// Send json to server
 recorder.sendJsonToServer = function(jsonData) {
   console.log("Sending JSON data to server");
   console.log("completed episodes number for json server", core.completedEpisodes)
