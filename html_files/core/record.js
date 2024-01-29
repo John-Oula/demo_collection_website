@@ -35,21 +35,16 @@ recorder.LISTENERS = [
 //Takes a screenshot
 //uses a boolean to make sure no other screenshot can occur while a screenshot is happening
 recorder.takeScreenshot = function(screenshotFileName) {
+  console.log("is taking screenshot",recorder.isTakingScreenshot)
   if (recorder.isTakingScreenshot) return;
-  recorder.isTakingScreenshot = true;
 
   html2canvas(document.body).then(canvas => {
+      recorder.isTakingScreenshot = true;
+      console.log("enter tkaing screenshot")
       // var image = canvas.toDataURL("image/png");
       var image = canvas.toDataURL();
-      var link = document.createElement('a');
-      link.href = image;
-      link.download = screenshotFileName + '.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      recorder.canTakeScreenshot = true;
       // Pass the screenshot data to the sendScreenshotToServer function
+      console.log("screenshot filename before added to queue",screenshotFileName)
       recorder.screenshots.push({fileName: screenshotFileName, data: image});
       // recorder.sendScreenshotToServer(image,screenshotFileName);
       console.log("screenshot added to queue")
@@ -87,6 +82,7 @@ recorder.startRecording = function () {
   console.log("taking screenshot")
   var screenshotFileName = 'click_' + Date.now();
   recorder.takeScreenshot(screenshotFileName);
+  recorder.isTakingScreenshot = false;
   recorder.data.startscreenshot = screenshotFileName
   console.log("screenshot file name",recorder.data.startscreenshot)
   recorder.data.startDom = core.getDOMInfo();
@@ -103,6 +99,7 @@ recorder.startRecording = function () {
   recorder.addState(null, null);
 }
 
+// Add state
 recorder.addState = function(event, action) {
   if (!recorder.isRecording) return;
   if (event && action) action.timing = event.eventPhase;
@@ -123,22 +120,18 @@ recorder.addState = function(event, action) {
   console.log('Action:', state.action);
 
   // If action type is 'click', delay the screenshot capture
-  // If action type is 'click', delay the screenshot capture
-if (action && action.type === 'click') {
-  // Introduce a delay before taking the screenshot
-  setTimeout(function() {
-      console.log("taking screenshot");
-      var screenshotFileName = 'click_' + Date.now();
-      recorder.takeScreenshot(screenshotFileName);
-      console.log("screenshot file name", screenshotFileName);
-
-      // Update the last state object with the screenshot link
-      console.log("length of states", recorder.data.states.length);
-      if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
-          recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
-      }
-  }, 300); // Delay of 300 ms (adjust as needed)
-}
+  if (action && action.type === 'click') {
+    console.log("taking screenshot");
+    var screenshotFileName = 'click_' + Date.now();
+    recorder.takeScreenshot(screenshotFileName);
+    recorder.isTakingScreenshot = false;
+    console.log("screenshot file name", screenshotFileName);
+    if (recorder.data && Array.isArray(recorder.data.states) && recorder.data.states.length) {
+          // Update the last state object with the screenshot link
+        console.log("length of states", recorder.data.states.length);
+        recorder.data.states[recorder.data.states.length - 1].screenshot = screenshotFileName + '.png';
+    }
+  }
 
 };
 
@@ -221,35 +214,6 @@ recorder.onscroll = function (event) {
   });
 }
 
-// End recording the episode
-// recorder.endRecording = function () {
-//   recorder.data.reward = WOB_REWARD_GLOBAL;
-//   recorder.data.rawReward = WOB_RAW_REWARD_GLOBAL;
-//   // Send the data to the server
-//   recorder.isRecording = false;
-//   var data = recorder.data;
-//   recorder.data = {};   // Prevent future addition
-//   console.log(data);
-//   var req = new XMLHttpRequest();
-//   req.open('POST', recorder.server);
-//   req.setRequestHeader('Content-type', 'text/plain');
-//   req.onreadystatechange = function () {
-//     if (req.readyState === XMLHttpRequest.DONE) {
-//       var msg = document.getElementById('server-reply');
-//       if (req.status === 200) {
-//         msg.setAttribute('style', 'color:green');
-//         msg.textContent = 'OK: ' + req.responseText;
-//       } else {
-//         msg.setAttribute('style', 'color:red');
-//         msg.textContent = 'ERROR: ' + req.statusText;
-//       }
-//     }
-//   }
-//   req.send(JSON.stringify(data));
-//   // Make it ready for the next episode
-//   core.cover_div.classList.remove('transparent');
-// }
-
 recorder.endRecording = function () {
   recorder.data.reward = WOB_REWARD_GLOBAL;
   recorder.data.rawReward = WOB_RAW_REWARD_GLOBAL;
@@ -287,39 +251,24 @@ recorder.endRecording = function () {
   });
   console.log("remove event listeners")
   // recorder.sendScreenshotsToServer(recorder.screenshots)
-  setTimeout(function() {
-    recorder.sendScreenshotsToServer(recorder.screenshots);
-  }, 10); // 10 seconds delay
-  // Send JSON data to the server
-  debugger; // Pause the execution here to inspect the current state
+  // setTimeout(function() {
+  //   console.log("screenshot episode number",core.completedEpisodes)
+  //   recorder.sendScreenshotsToServer(recorder.screenshots);
+  // }, 10); // 10 seconds delay
+  // debugger;
+  console.log("json episode number",core.completedEpisodes)
   recorder.sendJsonToServer(jsonData);
-  debugger; // Pause the execution here to inspect the current state
+  console.log("screenshot episode number",core.completedEpisodes)
+  recorder.sendScreenshotsToServer(recorder.screenshots);
+  // debugger;
 }
 
-// recorder.sendScreenshotToServer = function(screenshotData, screenshotFileName) {
-//   console.log("Sending screenshot to server");
-
-//   $.ajax({
-//     type: "POST",
-//     url: "http://localhost:5000/hook",
-//     data: {
-//       imageBase64: screenshotData,
-//       imageName: screenshotFileName
-//     },
-//     xhrFields: {
-//       withCredentials: true
-//     },
-//     crossDomain: true
-//   }).done(function(response) {
-//     console.log('Screenshot sent successfully:', response);
-//   }).fail(function(jqXHR, textStatus) {
-//     console.log('Failed to send screenshot:', textStatus);
-//   });
-// }
-
+//Send screenshots to server
 recorder.sendScreenshotsToServer = function(screenshots) {
   console.log("Sending screenshots to server");
   console.log("screenshots array",screenshots)
+  console.log("completed episodes number for image server", core.completedEpisodes)
+  // debugger;
 
   // Iterate through each screenshot in the array
   screenshots.forEach(function(screenshot, index) {
@@ -330,7 +279,9 @@ recorder.sendScreenshotsToServer = function(screenshots) {
         url: "http://localhost:5000/hook",
         data: {
           imageBase64: screenshot.data,
-          imageName: screenshot.fileName
+          imageName: screenshot.fileName,
+          taskName: recorder.taskName,
+          completedEpisodes: core.completedEpisodes
         },
         xhrFields: {
           withCredentials: true
@@ -341,17 +292,24 @@ recorder.sendScreenshotsToServer = function(screenshots) {
       }).fail(function(jqXHR, textStatus) {
         console.log('Failed to send screenshot:', textStatus);
       });
-    }, 1000 * index); // Delay of 1 second per screenshot
+    }, 100 * index); // Delay of 1 second per screenshot
   });
 }
 
+// Send json to server
 recorder.sendJsonToServer = function(jsonData) {
   console.log("Sending JSON data to server");
+  console.log("completed episodes number for json server", core.completedEpisodes)
+  // debugger;
 
   $.ajax({
     type: "POST",
     url: "http://localhost:5000/upload_json",
-    data: jsonData,
+    data: JSON.stringify({
+      jsonData: jsonData,
+      taskName: recorder.taskName,
+      completedEpisodes: core.completedEpisodes
+    }),
     contentType: "application/json", // Specify that you're sending JSON
     dataType: "json", // Expect a JSON response
     xhrFields: {
@@ -361,8 +319,11 @@ recorder.sendJsonToServer = function(jsonData) {
   }).done(function(response) {
     console.log('JSON data sent successfully:', response);
   }).fail(function(jqXHR, textStatus) {
+    // debugger;
     console.log('Failed to send JSON data:', textStatus);
+    // debugger;
   });
+  // debugger;
 }
 
 

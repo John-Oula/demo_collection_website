@@ -1,21 +1,56 @@
-var core = {};
-// set html index to 0 if null what is happening in the else situation?
+var core = {
+};
+
+// Completed episodes value retrieval
+// For each task type we generate three different versions
+core.completedEpisodes = localStorage.getItem('completedEpisodes');
+if (core.completedEpisodes === null || core.completedEpisodes === undefined) {
+  core.completedEpisodes = 0;
+} else {
+  core.completedEpisodes = parseInt(core.completedEpisodes, 10); // Convert the stored string back to a number
+}
+
+// Store the completedEpisodes value in localStorage
+localStorage.setItem('completedEpisodes', core.completedEpisodes);
+console.log("page reloaded and here is number of completed episodes", core.completedEpisodes);
+
+
+// currentHtmlIndex value retrieval - use it to index to the right html task file
 var currentHtmlIndex = localStorage.getItem('currentHtmlIndex');
 if (currentHtmlIndex === null) {
   currentHtmlIndex = 0;
 } else {
   currentHtmlIndex = parseInt(currentHtmlIndex, 10); // Convert to integer
 }
-var completedEpisodes = 0; // Counter for completed episodes
+
 // Current index for the HTML files array
+//array of task html files
 var htmlFiles = [
-    '../miniwob/choose-date-easy.html?record=true',
     '../miniwob/click-tab-2-easy.html?record=true',
   '../miniwob/choose-date-medium.html?record=true',
   '../miniwob/click-tab-2-medium.html?record=true',
   '../miniwob/click-test-transfer.html?record=true'
 ];
 
+//Not using this
+var fileMap = {
+  'choose-date-easy':0,
+  'click-tab-2-easy': 1,
+  'choose-date-medium': 2,
+  'click-tab-2-medium': 3,
+  'click-test-transfer': 4
+};
+
+// Create the next task button that allows user to move to next task html website
+core.create_button = function() {
+  // Check if the button already exists to avoid creating duplicates
+  if (!core.nextTaskButton) {
+    core.nextTaskButton = document.createElement('button');
+    core.nextTaskButton.textContent = 'Next Task';
+    core.nextTaskButton.style.display = 'none'; // Initially hide the button
+    document.body.appendChild(core.nextTaskButton); // Append the button to the body
+  }
+}
 // various common utilities
 
 // seedrandom.min.js -- https://github.com/davidbau/seedrandom
@@ -85,28 +120,47 @@ core.CD_TIMER = null; // stores timer ID for displaying rewards
 core.ept0 = null; // stores system time when episode begins (so we can time it)
 core.cover_div = null; // cover div for synchronization
 
+//start episode
 core.startEpisode = function() {
   core.createDisplay();
   console.log("Start recorder for all URLs");
-  debugger;
+  // debugger;
+  console.log("number of episodes before adding script",core.completedEpisodes)
   core.addRecordScript();
-  debugger;
+  console.log("number of episodes",core.completedEpisodes)
+  // debugger;
   console.log("added record script")
   if (core.cover_div == null) {
     core.cover_div = document.createElement('div');
     core.cover_div.setAttribute('id', 'sync-task-cover');
     core.cover_div.innerHTML = 'START';
     core.cover_div.onclick = function () {
-      console.log("start clicked");
-      console.log("completed episodes index",completedEpisodes)
-      console.log("index_counter",currentHtmlIndex)
-      if (completedEpisodes < 3) {
-        debugger;
+      // console.log("start clicked");
+      // console.log("completed episodes index",core.completedEpisodes)
+      // console.log("index_counter",currentHtmlIndex)
+      // core.startEpisodeReal();
+      // Your existing code here
+      if (core.completedEpisodes >= 3) {
+        //Display the "Next Task" button
+        core.nextTaskButton.style.display = 'block'; // Make the button visible
+        core.nextTaskButton.addEventListener('click', function() {
+          // Reset the completed episodes counter after next task is clicked
+          core.completedEpisodes = 0;
+          localStorage.setItem('completedEpisodes', core.completedEpisodes.toString()); // Also reset in localStorage
+          
+          // Redirect and move to the next HTML file
+          currentHtmlIndex = (currentHtmlIndex + 1) % htmlFiles.length;
+          localStorage.setItem('currentHtmlIndex', currentHtmlIndex.toString());
+          window.location.href = htmlFiles[currentHtmlIndex];
+        });
+        if (core.cover_div) {
+          console.log("Start is disabled due to completedEpisodes >= 3");
+          core.cover_div.innerHTML = 'Press Next Task'; // Update the cover div text if needed
+        }
+      }
+      else{
+        core.nextTaskButton.style.display = 'none';
         core.startEpisodeReal();
-      } else {
-        console.log("Start is disabled due to completedEpisodes >= 3");
-        core.cover_div.innerHTML = 'Press Next Task';
-        // Optionally, provide some visual feedback that the start is disabled
       }
     };
     document.body.appendChild(core.cover_div);
@@ -114,6 +168,7 @@ core.startEpisode = function() {
   core.cover_div.style.display = 'block';
 }
 
+//start the actual episode and allow for user interaction
 core.startEpisodeReal = function () {
   core.resetRefCode();
   genProblem();
@@ -135,47 +190,18 @@ core.startEpisodeReal = function () {
   }, core.EPISODE_MAX_TIME);
 
   console.log("start recording")
+  //set up and add the recording to record and collect user interaction data
   recorder.setup();
   recorder.startRecording();
 }
 
-core.create_button = function() {
-  var existingButton = document.getElementById('nextTaskButton');
-  if (existingButton) {
-    existingButton.remove(); // Remove existing button to avoid duplicates
-  }
 
-  var button = document.createElement('button');
-  button.id = 'nextTaskButton';
-  button.textContent = 'Next Task';
-  button.style.display = 'none'; // Initially hide the button
-
-  button.addEventListener('click', function() {
-    // Reset the completed episodes counter after next task is clicked
-    completedEpisodes = 0;
-    // Hide the button
-    button.style.display = 'none';
-
-    // Redirect and move to the next HTML file
-    currentHtmlIndex = (currentHtmlIndex + 1) % htmlFiles.length;
-    console.log("currentHtmlIndex increasing",currentHtmlIndex)
-    // Save the updated index to localStorage
-    localStorage.setItem('currentHtmlIndex', currentHtmlIndex);
-    window.location.href = htmlFiles[currentHtmlIndex];
-    console.log("Navigating to", htmlFiles[currentHtmlIndex]);
-  });
-
-  // Append the button to a specific element
-  document.body.appendChild(button);
-}
-
-
+// End episode
 core.endEpisode = function(reward, time_proportional, reason) {
+  //end recording
   console.log("ending recording")
   recorder.endRecording()
-  debugger;
-  // stop timer and set to null, so that only one event gets rewarded
-  // for any given episode.
+  // debugger;
   if(core.EP_TIMER !== null) {
     clearTimeout(core.EP_TIMER);
     core.EP_TIMER = null;
@@ -205,20 +231,18 @@ core.endEpisode = function(reward, time_proportional, reason) {
   console.log("after update display")
   core.clearTimer();
 
-  completedEpisodes++; // Increment the episode counter
-  if (completedEpisodes >= 3) {
-    var nextTaskButton = document.getElementById('nextTaskButton');
-    if (nextTaskButton) {
-      nextTaskButton.style.display = 'block'; // Show the button
-    }
-  }
-   // Check if two episodes have been completed
-   
-  console.log("completed episodes index",completedEpisodes)
+  // Increment the episode counter
+  core.completedEpisodes++;
+  localStorage.setItem('completedEpisodes', core.completedEpisodes.toString());
+  console.log("increasing episode number",core.completedEpisodes)
+  // debugger;
+  console.log("completed episodes index",core.completedEpisodes)
   console.log("index_counter",currentHtmlIndex)
-  debugger;
+  // debugger;
+  // debugger;
+  //Start the next episode
   core.startEpisode();
-  debugger;
+  // debugger;
   // With the sync screen, the timeout above is redundant
 }
 
@@ -692,6 +716,7 @@ if (core.QueryString.mode) {
 // ################################
 // Record demonstrations (import core/record.js)
 
+// Add record script
 core.addRecordScript = function () {
   // record script
   var script = document.createElement('script');
