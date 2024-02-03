@@ -21,7 +21,7 @@ source env/bin/activate
 pip install -r requirements
 
 #Running this code locally
-Front End:
+#Front End:
 Install html2canvas: -this is what we are currently using to store screenshots
 `npm install html2canvas`
 
@@ -29,6 +29,6 @@ Make sure html2canvas is correctly referenced in the .html files listed in the t
 
 Use the open with live server extension on visual studio code to run and open index.html otherwise you will run into CORS issues
 
-Backend:
+#Backend:
 Run `python scripts/server.py`
 
