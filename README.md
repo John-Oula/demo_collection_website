@@ -21,6 +21,7 @@ source env/bin/activate
 pip install -r requirements
 
 #Running this code locally
+
 #Front End:
 Install html2canvas: -this is what we are currently using to store screenshots
 `npm install html2canvas`
