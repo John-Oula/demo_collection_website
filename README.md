@@ -18,7 +18,7 @@ scripts/server.py
 #Set up a virtual environment
 python -m venv env
 source env/bin/activate
-pip insttal -r requirements
+pip install -r requirements
 
 #Running this code locally
 Front End:
