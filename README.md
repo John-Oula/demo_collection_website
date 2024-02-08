@@ -15,7 +15,7 @@ scripts/airtable.py
 scripts/google_drive.py
 scripts/server.py
 
-#Set up a virtual environment
+# Set up a virtual environment
 python -m venv env
 source env/bin/activate
 pip install -r requirements
