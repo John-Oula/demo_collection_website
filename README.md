@@ -16,9 +16,11 @@ scripts/google_drive.py
 scripts/server.py
 
 # Set up a virtual environment
+```
 python -m venv env
 source env/bin/activate
 pip install -r requirements
+```
 
 # Running this code locally
 
